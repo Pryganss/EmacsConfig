@@ -1,0 +1,11 @@
+/#init.el#
+/.#init.el
+/init.el~
+/forge-database.sqlite
+/elpa/
+/eln-cache/
+/auto-save-list/
+/ac-comphist.dat
+/projectile-bookmarks.eld
+/session.2927b995d-75c9-40a1-8a8d-cc7764b32720
+/transient/
