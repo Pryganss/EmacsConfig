@@ -37,8 +37,9 @@
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
- 		 ("melpa-stable" . "https://stable.melpa.org/packages/")
- 		 ("elpa" . "https://elpa.gnu.org/packages/")))
+			 ("org" . "https://orgmode.org/elpa")
+ 			 ("melpa-stable" . "https://stable.melpa.org/packages/")
+ 			 ("elpa" . "https://elpa.gnu.org/packages/")))
 
 (package-initialize)
 (unless package-archive-contents
@@ -67,12 +68,19 @@
   (general-evil-setup t)
 
   (general-create-definer pry/leader-keys
-    :keymaps '(normal insert visual emacs)
+    :keymaps '(normal insert visual)
     :global-prefix "C-<tab>")
 
+  (general-auto-unbind-keys)
+  
   (pry/leader-keys
     "t" '(:ignore t :which-key "toggles")
-    "tt" '(load-theme :which-key "choose theme")))
+    "tt" '(load-theme :which-key "choose theme")
+    "o" '(:ignore t :which-key "org commands")
+    "oa" '(org-agenda :which-key "agenda menu")
+    "m" '(:ignore t :which-key "magit commands")
+    "ms" '(magit-status :which-key "magit status")))
+
 
 (defun pry/evil-hook ()
   (dolist (mode '(custom-mode
@@ -96,7 +104,9 @@
   :config
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-
+  (define-key evil-insert-state-map (kbd "C-p") 'evil-previous-visual-line)
+  (define-key evil-insert-state-map (kbd "C-n") 'evil-next-visual-line)
+  
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
@@ -207,11 +217,129 @@
 (use-package smart-semicolon)
 (add-hook 'prog-mode #'smart-semicolon-mode)
 
+;; Lorem Ipsum
+(use-package lorem-ipsum)
+(lorem-ipsum-use-default-bindings)
+
+;; Org Mode
+(defun pry/org-mode-setup ()
+  (org-indent-mode)
+  (visual-line-mode 1))
+
+
+(use-package org
+  :hook (org-mode . pry/org-mode-setup)
+  :config
+  (setq org-ellipsis " ⌄"
+	org-hide-emphasis-markers t)
+  
+  (setq org-agenda-files
+	'("~/.emacs.d/OrgFiles/Tasks.org"
+	  "~/.emacs.d/OrgFiles/Habits.org"))
+
+  (setq org-agenda-skip-scheduled-if-done t)
+
+  (require 'org-habit)
+  (add-to-list 'org-modules 'org-habit)
+  (setq org-habit-graph-column 60)
+  
+  (setq org-refile-targets
+	'(("Archive.org" :maxlevel . 1)
+	  ("Tasks.org" :maxlevel . 1)))
+
+  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+
+  (setq org-todo-keywords
+	'((sequence "TODO(t)"  "WAIT(w@/!)" "NEXT(n)" "|" "DONE(d)")
+	  (sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "COMPLETED(c)" "CANC(k@)")))
+
+  (setq org-agenda-custom-commands
+	'(("d" "Dashboard"
+	   ((agenda "" ((org-deadline-warning-days 7)))
+	    (todo "NEXT"
+		  ((org-agenda-overriding-header "Next Tasks")))
+	    (tags-todo "agenda/ACTIVE" ((org-agenda-overriding-header "Active Projects")))))
+	  
+	  ("n" "Next Tasks"
+	   ((todo "NEXT"
+		  ((org-agenda-overriding-header "Next Tasks")))))
+	  
+	  ("W" "School Tasks" tags-todo "+school")
+	  
+	  ;; Low-effort next actions
+	  ("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
+	   ((org-agenda-overriding-header "Low Effort Tasks")
+	    (org-agenda-max-todos 20)
+	    (org-agenda-files org-agenda-files)))
+	  
+	  ("w" "Workflow Status"
+	   ((todo "WAIT"
+		  ((org-agenda-overriding-header "Waiting")
+		   (org-agenda-files org-agenda-files)))
+	    (todo "REVIEW"
+		  ((org-agenda-overriding-header "In Review")
+		   (org-agenda-files org-agenda-files)))
+	    (todo "PLAN"
+		  ((org-agenda-overriding-header "In Planning")
+		   (org-agenda-todo-list-sublevels nil)
+		   (org-agenda-files org-agenda-files)))
+	    (todo "BACKLOG"
+		  ((org-agenda-overriding-header "Project Backlog")
+		   (org-agenda-todo-list-sublevels nil)
+		   (org-agenda-files org-agenda-files)))
+	    (todo "READY"
+		  ((org-agenda-overriding-header "Ready for Work")
+		   (org-agenda-files org-agenda-files)))
+	    (todo "ACTIVE"
+		  ((org-agenda-overriding-header "Active Projects")
+		   (org-agenda-files org-agenda-files)))
+	    (todo "COMPLETED"
+		  ((org-agenda-overriding-header "Completed Projects")
+		   (org-agenda-files org-agenda-files)))
+	    (todo "CANC"
+		  ((org-agenda-overriding-header "Cancelled Projects")
+		   (org-agenda-files org-agenda-files)))))))
+  
+  (setq org-capture-templates
+	`(("t" "Tasks / Projects")
+	  ("tt" "Task" entry (file+olp "~/.emacs.d/OrgFiles/Tasks.org" "Inbox")
+           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
+	  
+	  ("j" "Journal Entries")
+	  ("jj" "Journal" entry
+           (file+olp+datetree "~/.emacs.d/OrgFiles/Journal.org")
+           "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
+	   
+           :clock-in :clock-resume
+           :empty-lines 1)
+	  ("jm" "Notes" entry
+           (file+olp+datetree "~/.emacs.d/OrgFiles/Journal.org")
+           "* %<%I:%M %p> - %a :notes:\n\n%?\n\n"
+           :clock-in :clock-resume
+           :empty-lines 1))))
+	  
+	  
 
 
 
+  
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("●" "○" "●" "○" "●" "○" "●"))) 
 
 
+(defun pry/org-mode-visual-fill ()
+  (setq visual-fill-column-width 200
+	visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+(use-package visual-fill-column
+  :hook (org-mode . pry/org-mode-visual-fill))
+
+(add-hook 'org-mode-hook
+          (lambda () (face-remap-add-relative 'default :family "DejaVu Sans Mono")))
 
 
 
@@ -232,7 +360,7 @@
  '(custom-safe-themes
    '("370109bfd8c7784bbf62e3f8c4f332aed0b915116e2d718bc7e2b8e0ebe35e10" "6ca5f925de5c119694dbe47e2bc95f8bad16b46d154b3e2e0ae246fec4100ec5" "c2aeb1bd4aa80f1e4f95746bda040aafb78b1808de07d340007ba898efa484f5" "5e2cdea6453f8963037723ab91c779b203fb201bf5c377094440f0c465d688ec" "2ac867f8748fdc50977c868eeeb44358e5a88efbf1e38fe310352431e4ed1be8" "47db50ff66e35d3a440485357fb6acb767c100e135ccdf459060407f8baea7b2" default))
  '(package-selected-packages
-   '(smart-semicolon auto-complete forge evil-magit magit counsel-projectile projectile hydra evil-collection evil mood-one-theme try tangotango-theme general disable-mouse uwu-theme all-the-icons kaolin-themes doom-themes helpful smartparens smart-parens which-key ace-jump-mode use-package swiper command-log-mode))
+   '(visual-fill-column lorem-ipsum org-bullets smart-semicolon auto-complete forge evil-magit magit counsel-projectile projectile hydra evil-collection evil mood-one-theme try tangotango-theme general disable-mouse uwu-theme all-the-icons kaolin-themes doom-themes helpful smartparens smart-parens which-key ace-jump-mode use-package swiper command-log-mode))
  '(warning-suppress-log-types '((comp) (comp) (comp) (comp)))
  '(warning-suppress-types '((comp) (comp) (comp))))
 (custom-set-faces
@@ -240,6 +368,19 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(org-date ((t (:inherit fixed-pitch :foreground "Cyan"))))
+ '(org-ellipsis ((t nil)))
+ '(org-habit-alert-face ((t (:background "light green" :foreground "black"))))
+ '(org-habit-clear-face ((t (:background "dim gray"))))
+ '(org-habit-clear-future-face ((t (:background "LightSteelBlue4"))))
+ '(org-level-1 ((t (:font "DejaVu Sans" :inherit outline-1 :extend nil :height 1.2))))
+ '(org-level-2 ((t (:font "DejaVu Sans" :inherit outline-2 :extend nil :height 1.1))))
+ '(org-level-3 ((t (:font "DejaVu Sans" :inherit outline-3 :extend nil :height 1.05))))
+ '(org-level-4 ((t (:font "DejaVu Sans" :inherit outline-4 :extend nil :height 1.0))))
+ '(org-level-5 ((t (:font "DejaVu Sans" :inherit outline-5 :extend nil :height 1.1))))
+ '(org-level-6 ((t (:font "DejaVu Sans" :inherit outline-6 :extend nil :height 1.1))))
+ '(org-level-7 ((t (:font "DejaVu Sans" :inherit outline-7 :extend nil :height 1.1))))
+ '(org-level-8 ((t (:font "DejaVu Sans" :inherit outline-8 :extend nil :height 1.1))))
  '(rainbow-delimiters-base-face ((t (:inherit rainbow-delimiters-base-face :foreground "rosy brown"))))
  '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "#55cdfc"))))
  '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "#f7a8b8"))))
