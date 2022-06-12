@@ -78,6 +78,7 @@
     "tt" '(load-theme :which-key "choose theme")
     "o" '(:ignore t :which-key "org commands")
     "oa" '(org-agenda :which-key "agenda menu")
+    "ot" '(org-babel-tangle :which-key "tangle")
     "m" '(:ignore t :which-key "magit commands")
     "ms" '(magit-status :which-key "magit status")))
 
@@ -163,6 +164,8 @@
 (use-package auto-complete)
 (global-auto-complete-mode)
 
+
+
 ;; Helpfull
 (use-package helpful
   :custom
@@ -181,9 +184,18 @@
   "scale text"
   ("j" text-scale-increase "in")
   ("k" text-scale-decrease "out")
-  ("f" nil "finished" :exit t))
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-resize-window ()
+  "resize window"
+  ("l" enlarge-window-horizontally "enlarge vertical")
+  ("h" shrink-window-horizontally "shrink vertical")
+  ("j" enlarge-window "enlarge horizontal")
+  ("k" shrink-window "shrink horizontal")
+  ("q" nil "quit" :exit t))
 
 (pry/leader-keys "ts" '(hydra-text-scale/body :which-key "scale text"))
+(pry/leader-keys "tw" '(hydra-resize-window/body :which-key "resize window"))
 
 ;; Projectile
 (use-package projectile
@@ -317,10 +329,13 @@
            "* %<%I:%M %p> - %a :notes:\n\n%?\n\n"
            :clock-in :clock-resume
            :empty-lines 1))))
-	  
-	  
 
+(require 'org-tempo)
 
+(add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("C++" . "src Cpp"))
 
   
 (use-package org-bullets
@@ -341,7 +356,13 @@
 (add-hook 'org-mode-hook
           (lambda () (face-remap-add-relative 'default :family "DejaVu Sans Mono")))
 
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (python . t)
+   (C . t)))
 
+(setq org-confirm-babel-evaluate nil)
 
 
 
@@ -368,6 +389,11 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-documentation ((t (:foreground "light gray"))))
+ '(custom-variable-obsolete ((t (:background "#282c30" :foreground "light gray"))))
+ '(org-block ((t (:inherit fixed-pitch :extend t :background "#2b2f31"))))
+ '(org-block-begin-line ((t (:inherit org-meta-line :extend t :background "#2b2f31"))))
+ '(org-block-end-line ((t (:inherit org-block-begin-line :extend t :background "#2b2f31"))))
  '(org-date ((t (:inherit fixed-pitch :foreground "Cyan"))))
  '(org-ellipsis ((t nil)))
  '(org-habit-alert-face ((t (:background "light green" :foreground "black"))))
@@ -391,3 +417,4 @@
  '(rainbow-delimiters-depth-7-face ((t (:inherit rainbow-delimiters-base-face :foreground "#fca3c4"))))
  '(rainbow-delimiters-depth-8-face ((t (:inherit rainbow-delimiters-base-face :foreground "#db8ae3"))))
  '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "#ab7edd")))))
+
