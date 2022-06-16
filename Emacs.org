@@ -1,7 +1,7 @@
 #+Emacs Config
 #+PROPERTY: header-args:emacs-lisp :tangle ./init.el :mkdirp yes
 
-* Package System Setup
+* Package Setup
 ** Use Package
 
 #+begin_src emacs-lisp
@@ -108,6 +108,62 @@
   
 #+end_src
 
+** Custom Set Variables
+
+#+begin_src emacs-lisp :comments link
+
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(evil-undo-system 'undo-redo)
+   '(auth-sources '("~/.authinfo"))
+   '(custom-safe-themes
+     '("370109bfd8c7784bbf62e3f8c4f332aed0b915116e2d718bc7e2b8e0ebe35e10" "6ca5f925de5c119694dbe47e2bc95f8bad16b46d154b3e2e0ae246fec4100ec5" "c2aeb1bd4aa80f1e4f95746bda040aafb78b1808de07d340007ba898efa484f5" "5e2cdea6453f8963037723ab91c779b203fb201bf5c377094440f0c465d688ec" "2ac867f8748fdc50977c868eeeb44358e5a88efbf1e38fe310352431e4ed1be8" "47db50ff66e35d3a440485357fb6acb767c100e135ccdf459060407f8baea7b2" default))
+   '(package-selected-packages
+     '(visual-fill-column lorem-ipsum org-bullets smart-semicolon auto-complete forge evil-magit magit counsel-projectile projectile hydra evil-collection evil mood-one-theme try tangotango-theme general disable-mouse uwu-theme all-the-icons kaolin-themes doom-themes helpful smartparens smart-parens which-key ace-jump-mode use-package swiper command-log-mode))
+   '(warning-suppress-log-types '((comp) (comp) (comp) (comp)))
+   '(warning-suppress-types '((comp) (comp) (comp))))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(company-tooltip-scrollbar-thumb ((t (:background "#282c30"))))
+   '(company-tooltip-scrollbar-track ((t (:background "#282c30"))))
+   '(org-block ((t (:inherit fixed-pitch :extend t :background "#2b2f31"))))
+   '(org-block-begin-line ((t (:inherit org-meta-line :extend t :background "#2b2f31"))))
+   '(org-block-end-line ((t (:inherit org-block-begin-line :extend t :background "#2b2f31"))))
+   '(org-date ((t (:inherit fixed-pitch :foreground "Cyan"))))
+   '(org-ellipsis ((t nil)))
+   '(org-habit-alert-face ((t (:background "light green" :foreground "black"))))
+   '(org-habit-clear-face ((t (:background "dim gray"))))
+   '(org-habit-clear-future-face ((t (:background "LightSteelBlue4"))))
+   '(org-level-1 ((t (:font "DejaVu Sans" :inherit outline-1 :extend nil :height 1.2))))
+   '(org-level-2 ((t (:font "DejaVu Sans" :inherit outline-2 :extend nil :height 1.1))))
+   '(org-level-3 ((t (:font "DejaVu Sans" :inherit outline-3 :extend nil :height 1.05))))
+   '(org-level-4 ((t (:font "DejaVu Sans" :inherit outline-4 :extend nil :height 1.0))))
+   '(org-level-5 ((t (:font "DejaVu Sans" :inherit outline-5 :extend nil :height 1.1))))
+   '(org-level-6 ((t (:font "DejaVu Sans" :inherit outline-6 :extend nil :height 1.1))))
+   '(org-level-7 ((t (:font "DejaVu Sans" :inherit outline-7 :extend nil :height 1.1))))
+   '(org-level-8 ((t (:font "DejaVu Sans" :inherit outline-8 :extend nil :height 1.1))))
+   '(rainbow-delimiters-base-face ((t (:inherit rainbow-delimiters-base-face :foreground "rosy brown"))))
+   '(rainbow-delimiters-depth-1-face ((t (:inherit rainbow-delimiters-base-face :foreground "#55cdfc"))))
+   '(rainbow-delimiters-depth-2-face ((t (:inherit rainbow-delimiters-base-face :foreground "#f7a8b8"))))
+   '(rainbow-delimiters-depth-3-face ((t (:inherit rainbow-delimiters-base-face :foreground "#ffffff"))))
+   '(rainbow-delimiters-depth-4-face ((t (:inherit rainbow-delimiters-base-face :foreground "#95c4a4"))))
+   '(rainbow-delimiters-depth-5-face ((t (:inherit rainbow-delimiters-base-face :foreground "#c2deae"))))
+   '(rainbow-delimiters-depth-6-face ((t (:inherit rainbow-delimiters-base-face :foreground "#faf9ce"))))
+   '(rainbow-delimiters-depth-7-face ((t (:inherit rainbow-delimiters-base-face :foreground "#fca3c4"))))
+   '(rainbow-delimiters-depth-8-face ((t (:inherit rainbow-delimiters-base-face :foreground "#db8ae3"))))
+   '(rainbow-delimiters-depth-9-face ((t (:inherit rainbow-delimiters-base-face :foreground "#ab7edd")))))
+
+
+#+end_src
+
+#+RESULTS:
+
 * Ivy
 
 #+begin_src emacs-lisp
@@ -115,11 +171,20 @@
   (use-package ivy
     :bind (("C-s" . swiper)
            :map ivy-minibuffer-map
-           ("TAB" . ivy-alt-done))
+           
+           ("C-j" . ivy-next-line)
+           ("C-k" . ivy-previous-line)
+           :map ivy-switch-buffer-map
+           ("C-j" . ivy-next-line)
+           ("C-k" . ivy-previous-line))
     :config
     (ivy-mode 1))
 
+  (use-package counsel)
+
 #+end_src
+
+#+RESULTS:
 
 * Org Mode
 ** Setup
@@ -149,7 +214,7 @@
     (advice-add 'org-refile :after 'org-save-all-org-buffers)
 
     (setq org-todo-keywords
-          '((sequence "TODO(t)"  "WAIT(w@/!)" "NEXT(n)" "|" "DONE(d)")
+          '((sequence "TODO(t)"  "WAIT(W@/!)" "NEXT(n)" "|" "DONE(d)")
             (sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "COMPLETED(c)" "CANC(k@)")))
 
     (setq org-agenda-custom-commands
@@ -257,22 +322,27 @@
 
 #+end_src
 
+#+RESULTS:
+: pry/org-mode-setup
+
 ** Auto-tangle Config Files
 
 #+begin_src emacs-lisp
 
   (defun pry/org-babel-tangle-config ()
+
     (when (string-equal (buffer-file-name)
                         (expand-file-name "~/.emacs.d/Emacs.org"))
       (let ((org-confirm-babel-evaluate nil))
         (org-babel-tangle))))
 
-  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'pry/org-babel-tangle-config)))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook 'pry/org-babel-tangle-config)))
 
 #+end_src
 
 #+RESULTS:
-| (lambda nil (add-hook 'after-save-hook #'pry/org-babel-tangle-config)) | (lambda nil (face-remap-add-relative 'default :family DejaVu Sans Mono)) | pry/org-mode-visual-fill | org-bullets-mode | org-tempo-setup | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | pry/org-mode-setup |
+| (lambda nil (add-hook 'after-save-hook 'pry/org-babel-tangle-config)) | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | (lambda nil (add-hook 'after-save-hook '(pry/org-babel-tangle-config))) | (lambda nil (face-remap-add-relative 'default :family DejaVu Sans Mono)) | pry/org-mode-visual-fill | org-bullets-mode | org-tempo-setup | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes | pry/org-mode-setup |
+
 * Evil
 ** Mode Hooks
 
@@ -329,7 +399,31 @@
 
 #+end_src
 
-* Git
+* IDE and Git
+** Projectile
+
+#+begin_src emacs-lisp
+
+    (use-package projectile
+      :diminish projectile-mode
+      :config (projectile-mode)
+      :custom ((projectile-completion-system 'ivy))
+      :bind-keymap
+      ("C-c p" . projectile-command-map)
+      :init
+      ;; NOTE: Set this to the folder where you keep your Git repos!
+      (when (file-directory-p "~/Projects/Code")
+        (setq projectile-project-search-path '("~/Projects/Code")))
+      (setq projectile-switch-project-action #'projectile-dired))
+
+    (use-package counsel-projectile
+      :config (counsel-projectile-mode))
+
+#+end_src
+
+#+RESULTS:
+: t
+
 ** Magit
 
 #+begin_src emacs-lisp
@@ -340,6 +434,9 @@
 
 #+end_src
 
+#+RESULTS:
+: t
+
 ** Forge
 
 #+begin_src emacs-lisp
@@ -348,6 +445,101 @@
     :after magit) 
 
 #+end_src
+
+** Auto Complete
+
+#+begin_src emacs-lisp
+
+  (use-package auto-complete)
+  ;;(global-auto-complete-mode)
+
+#+end_src
+
+** Smart parens
+
+#+begin_src emacs-lisp
+
+  (use-package smartparens)
+  (require 'smartparens-config)
+  (smartparens-global-mode 1)
+
+#+end_src
+
+** Smart Semicolon
+
+#+begin_src emacs-lisp
+
+  (use-package smart-semicolon)
+  (add-hook 'prog-mode #'smart-semicolon-mode)
+  (add-hook 'lsp-mode #'smart-semicolon-mode)
+
+#+end_src
+
+#+RESULTS:
+| smart-semicolon-mode |
+
+** LSP Mode
+*** Language Servers
+
+#+begin_src emacs-lisp
+
+  (use-package lsp-mode
+    :commands (lsp lsp-deferred)
+    :init
+    (setq lsp-keymap-prefix "C-c s")
+    :config
+    (setq read-process-output-max (* 1024 1024))
+    (lsp-enable-which-key-integration t)
+    (setq lsp-enable-completion-at-point nil))
+
+
+#+end_src
+
+#+RESULTS:
+
+*** Languages
+**** C/C++
+
+#+begin_src emacs-lisp
+
+  (add-hook 'c-mode-hook 'lsp)
+  (add-hook 'c++-mode-hook 'lsp)
+
+#+end_src
+
+#+RESULTS:
+| lsp |
+
+* Terminal
+** Term mode
+
+#+begin_src emacs-lisp
+
+  (use-package term
+    :config
+    (setq explicit-shell-file-name "bash")
+    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+
+  (use-package eterm-256color
+    :hook (term-mode . eterm-256color-mode))
+
+#+end_src
+
+#+RESULTS:
+| eterm-256color-mode | evil-collection-term-escape-stay | evil-collection-term-sync-state-and-mode |
+** Vterm
+
+#+begin_src emacs-lisp
+
+      (use-package vterm
+        :commands vterm
+        :config
+        (setq vterm-max-scrollback 10000))
+
+#+end_src
+
+#+RESULTS:
+: t
 
 * Misc.
 ** Command Log Mode
@@ -365,25 +557,6 @@
 
   (use-package ace-jump-mode)
   (define-key global-map (kbd "M-s") 'ace-jump-mode)
-  
-#+end_src
-
-** Smart parens
-
-#+begin_src emacs-lisp
-
-  (use-package smartparens)
-  (require 'smartparens-config)
-  (smartparens-global-mode 1)
-
-#+end_src
-
-** Auto Complete
-
-#+begin_src emacs-lisp
-
-  (use-package auto-complete)
-  (global-auto-complete-mode)
   
 #+end_src
 
@@ -412,15 +585,6 @@
   
 #+end_src
 
-** Smart Semicolon
-
-#+begin_src emacs-lisp
-
-  (use-package smart-semicolon)
-  (add-hook 'prog-mode #'smart-semicolon-mode)
-
-#+end_src
-
 ** Lorem Ipsum
 
 #+begin_src emacs-lisp
@@ -432,32 +596,59 @@
 
 
 * Keybinds
+** Which Key
+
+#+begin_src emacs-lisp
+
+  (use-package which-key
+    :init (which-key-mode)
+    :diminish which-key mode
+    :config
+    (setq which-key-idle-delay 0.3))
+
+#+end_src
+
 ** General
 
 #+begin_src emacs-lisp
 
-  (use-package general
-    :config
-    (general-evil-setup t)
-    (general-auto-unbind-keys)
+          (use-package general
+            :config
+            (general-evil-setup t)
+            (general-auto-unbind-keys)
 
-    (general-create-definer pry/leader-keys
-      :keymaps '(normal insert visual)
-      :global-prefix "C-<tab>")
+            (general-create-definer pry/leader-keys
+              :keymaps '(normal visual insert emacs)
+              :prefix "<tab>"
+              :non-normal-prefix "C-<tab>"
+              :global-prefix "C-<tab>")
 
-    (pry/leader-keys
-      "t" '(:ignore t :which-key "toggles")
-      "tt" '(load-theme :which-key "choose theme")
-      "o" '(:ignore t :which-key "org commands")
-      "oa" '(org-agenda :which-key "agenda menu")
-      "ot" '(org-babel-tangle :which-key "tangle")
-      "m" '(:ignore t :which-key "magit commands")
-      "ms" '(magit-status :which-key "magit status"))
+            (pry/leader-keys
+              "t" '(:ignore t :which-key "toggles")
+              "tt" '(load-theme :which-key "choose theme")
+              "o" '(:ignore t :which-key "org commands")
+              "oa" '(org-agenda :which-key "agenda menu")
+              "ot" '(org-babel-tangle :which-key "tangle")
+              "m" '(:ignore t :which-key "magit commands")
+              "ms" '(magit-status :which-key "magit status")
+              "p" '(:ignore t :which-key "projectile")
+              "pf" '(counsel-projectile-find-file :which-key "find file")
+              "pb" '(counsel-projectile-switch-to-buffer :which-key "switch buffer")
+              "l" '(:ignore t :which-key "lsp")
+              "lf" '(lsp-format-buffer :which-key "format")
+              "c" '(:ignore t :which-key "comment")
+              "cl" '(comment-line :which-key "line")
+              "cr" '(comment-region :which-key "region")) 
 
-    (pry/leader-keys "ts" '(hydra-text-scale/body :which-key "scale text"))
-    (pry/leader-keys "tw" '(hydra-resize-window/body :which-key "resize window")))
+
+
+            (pry/leader-keys "ts" '(hydra-text-scale/body :which-key "scale text"))
+            (pry/leader-keys "tw" '(hydra-resize-window/body :which-key "resize window")))
 
 #+end_src
+
+#+RESULTS:
+: t
 
 ** Hydra
 
@@ -503,15 +694,7 @@
 
 #+end_src
 
-** Which Key
 
-#+begin_src emacs-lisp
 
-  (use-package which-key
-    :init (which-key-mode)
-    :diminish which-key mode
-    :config
-    (setq which-key-idle-delay 0.3))
-
-#+end_src
+* Fixes
 
