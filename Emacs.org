@@ -36,6 +36,28 @@
   
 #+end_src 
 
+**  Straight
+
+#+begin_src emacs-lisp
+
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+  
+#+end_src
+
+#+RESULTS:
+: t
+
 * UI Config
 ** Simplify
 
@@ -414,6 +436,9 @@
       ;; NOTE: Set this to the folder where you keep your Git repos!
       (when (file-directory-p "~/Projects/Code")
         (setq projectile-project-search-path '("~/Projects/Code")))
+      (when (file-directory-p "~/Projects/Unity")
+        (setq projectile-project-search-path '("~/Projects/Unity")))
+
       (setq projectile-switch-project-action #'projectile-dired))
 
     (use-package counsel-projectile
@@ -455,7 +480,7 @@
 
 #+end_src
 
-** Smart parens
+** Smart Parens
 
 #+begin_src emacs-lisp
 
@@ -478,6 +503,50 @@
 #+RESULTS:
 | smart-semicolon-mode |
 
+** Corfu
+
+#+begin_src emacs-lisp
+
+  (use-package corfu
+    :custom
+    (corfu-auto t)
+    (corfu-auto-prefix 1)
+    (corfu-auto-delay 0.0)
+    :init
+    (global-corfu-mode))
+
+  (setq tab-always-indent 'complete)
+
+#+end_src
+
+#+RESULTS:
+: complete
+
+** Cape
+
+#+begin_src emacs-lisp
+
+  (use-package cape
+    :init
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+
+#+end_src
+
+#+RESULTS:
+
+** Orderless
+
+#+begin_src emacs-lisp
+
+  (use-package orderless
+    :init
+    (setq completion-styles '(orderless partial-completion basic)
+          completion-category-defaults nil
+          completion-category-overrides nil))
+
+#+end_src
+
 ** LSP Mode
 *** Language Servers
 
@@ -487,15 +556,28 @@
     :commands (lsp lsp-deferred)
     :init
     (setq lsp-keymap-prefix "C-c s")
+    (defun pry/lsp-mode-setup-completion ()
+      (setq-local completion-styles '(orderless)
+                  completion-category-defaults nil))
+    :hook
+    (lsp-mode . pry/lsp-mode-setup-completion)
+    (lsp-mode . smart-semicolon-mode)
+    :custom
+    (lsp-completion-provider :none)
     :config
+    (setq gc-cons-threshold (* 100 1024 1024))
+    (setq lsp-idle-delay 0.1)
     (setq read-process-output-max (* 1024 1024))
     (lsp-enable-which-key-integration t)
     (setq lsp-enable-completion-at-point nil))
 
+  (add-hook 'text-mode-hook (lambda ()
+                        (setq-local lsp-completion-enable nil)))
 
 #+end_src
 
 #+RESULTS:
+| (lambda nil (setq-local lsp-completion-enable nil)) | text-mode-hook-identify |
 
 *** Languages
 **** C/C++
@@ -509,6 +591,47 @@
 
 #+RESULTS:
 | lsp |
+**** C#
+
+#+begin_src emacs-lisp
+
+  (use-package csharp-mode
+  :ensure t
+  :init
+  (defun my/csharp-mode-hook ()
+    (setq-local lsp-auto-guess-root t)
+    (lsp))
+  (add-hook 'csharp-mode-hook #'my/csharp-mode-hook))
+
+#+end_src
+
+#+RESULTS:
+
+*** Unity
+
+#+begin_src emacs-lisp
+
+  (setenv "FrameworkPathOverride" "/lib/mono/4.5")
+  (straight-use-package
+   '(unity :type git :host github :repo "elizagamedev/unity.el"
+           :files ("*.el" "*.c")))
+  (add-hook 'after-init-hook #'unity-build-code-shim)
+  (add-hook 'after-init-hook #'unity-setup)
+
+#+end_src
+
+#+RESULTS:
+| unity-setup | unity-build-code-shim | x-wm-set-size-hint | tramp-register-archive-file-name-handler | magit-maybe-define-global-key-bindings | magit-auto-revert-mode--init-kludge | magit-startup-asserts | magit-version | forge-startup-asserts | table--make-cell-map |
+
+** Comment lines
+
+#+begin_src emacs-lisp
+    (use-package evil-nerd-commenter
+      :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+#+end_src
+
+#+RESULTS:
+: evilnc-comment-or-uncomment-lines
 
 * Terminal
 ** Term mode
@@ -594,6 +717,13 @@
   
 #+end_src
 
+** Spotify
+
+#+begin_src emacs-lisp
+
+  (use-package counsel-spotify)
+
+#+end_src
 
 * Keybinds
 ** Which Key
@@ -612,38 +742,39 @@
 
 #+begin_src emacs-lisp
 
-          (use-package general
-            :config
-            (general-evil-setup t)
-            (general-auto-unbind-keys)
+  (use-package general
+    :config
+    (general-evil-setup t)
+    (general-auto-unbind-keys)
 
-            (general-create-definer pry/leader-keys
-              :keymaps '(normal visual insert emacs)
-              :prefix "<tab>"
-              :non-normal-prefix "C-<tab>"
-              :global-prefix "C-<tab>")
+    (general-create-definer pry/leader-keys
+      :keymaps '(normal visual insert emacs)
+      :prefix "C-<tab>"
+      :non-normal-prefix "C-<tab>"
+      :global-prefix "C-<tab>")
 
-            (pry/leader-keys
-              "t" '(:ignore t :which-key "toggles")
-              "tt" '(load-theme :which-key "choose theme")
-              "o" '(:ignore t :which-key "org commands")
-              "oa" '(org-agenda :which-key "agenda menu")
-              "ot" '(org-babel-tangle :which-key "tangle")
-              "m" '(:ignore t :which-key "magit commands")
-              "ms" '(magit-status :which-key "magit status")
-              "p" '(:ignore t :which-key "projectile")
-              "pf" '(counsel-projectile-find-file :which-key "find file")
-              "pb" '(counsel-projectile-switch-to-buffer :which-key "switch buffer")
-              "l" '(:ignore t :which-key "lsp")
-              "lf" '(lsp-format-buffer :which-key "format")
-              "c" '(:ignore t :which-key "comment")
-              "cl" '(comment-line :which-key "line")
-              "cr" '(comment-region :which-key "region")) 
+    (pry/leader-keys
+      "t" '(:ignore t :which-key "toggles")
+      "tt" '(load-theme :which-key "choose theme")
+      "o" '(:ignore t :which-key "org commands")
+      "oa" '(org-agenda :which-key "agenda menu")
+      "ot" '(org-babel-tangle :which-key "tangle")
+      "m" '(:ignore t :which-key "magit commands")
+      "ms" '(magit-status :which-key "magit status")
+      "p" '(:ignore t :which-key "projectile")
+      "pf" '(counsel-projectile-find-file :which-key "find file")
+      "pb" '(counsel-projectile-switch-to-buffer :which-key "switch buffer")
+      "l" '(:ignore t :which-key "lsp")
+      "lf" '(lsp-format-buffer :which-key "format")
+      "ld" '(flymake-show-buffer-diagnostics :which-key "diagnostics")
+      "c" '(:ignore t :which-key "comment")
+      "cl" '(comment-line :which-key "line")
+      "cr" '(comment-region :which-key "region")) 
 
 
 
-            (pry/leader-keys "ts" '(hydra-text-scale/body :which-key "scale text"))
-            (pry/leader-keys "tw" '(hydra-resize-window/body :which-key "resize window")))
+    (pry/leader-keys "ts" '(hydra-text-scale/body :which-key "scale text"))
+    (pry/leader-keys "tw" '(hydra-resize-window/body :which-key "resize window")))
 
 #+end_src
 

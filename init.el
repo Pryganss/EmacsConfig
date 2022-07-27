@@ -17,6 +17,19 @@
 
 (use-package try)
 
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
 (setq inhibit-startup-message t)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -293,6 +306,9 @@
   ;; NOTE: Set this to the folder where you keep your Git repos!
   (when (file-directory-p "~/Projects/Code")
     (setq projectile-project-search-path '("~/Projects/Code")))
+  (when (file-directory-p "~/Projects/Unity")
+    (setq projectile-project-search-path '("~/Projects/Unity")))
+
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
@@ -316,17 +332,69 @@
 (add-hook 'prog-mode #'smart-semicolon-mode)
 (add-hook 'lsp-mode #'smart-semicolon-mode)
 
+(use-package corfu
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 1)
+  (corfu-auto-delay 0.0)
+  :init
+  (global-corfu-mode))
+
+(setq tab-always-indent 'complete)
+
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+
+(use-package orderless
+  :init
+  (setq completion-styles '(orderless partial-completion basic)
+        completion-category-defaults nil
+        completion-category-overrides nil))
+
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
   :init
   (setq lsp-keymap-prefix "C-c s")
+  (defun pry/lsp-mode-setup-completion ()
+    (setq-local completion-styles '(orderless)
+                completion-category-defaults nil))
+  :hook
+  (lsp-mode . pry/lsp-mode-setup-completion)
+  (lsp-mode . smart-semicolon-mode)
+  :custom
+  (lsp-completion-provider :none)
   :config
+  (setq gc-cons-threshold (* 100 1024 1024))
+  (setq lsp-idle-delay 0.1)
   (setq read-process-output-max (* 1024 1024))
   (lsp-enable-which-key-integration t)
   (setq lsp-enable-completion-at-point nil))
 
+(add-hook 'text-mode-hook (lambda ()
+                      (setq-local lsp-completion-enable nil)))
+
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'c++-mode-hook 'lsp)
+
+(use-package csharp-mode
+:ensure t
+:init
+(defun my/csharp-mode-hook ()
+  (setq-local lsp-auto-guess-root t)
+  (lsp))
+(add-hook 'csharp-mode-hook #'my/csharp-mode-hook))
+
+(setenv "FrameworkPathOverride" "/lib/mono/4.5")
+(straight-use-package
+ '(unity :type git :host github :repo "elizagamedev/unity.el"
+         :files ("*.el" "*.c")))
+(add-hook 'after-init-hook #'unity-build-code-shim)
+(add-hook 'after-init-hook #'unity-setup)
+
+(use-package evil-nerd-commenter
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
 (use-package term
   :config
@@ -363,6 +431,8 @@
 (use-package lorem-ipsum)
 (lorem-ipsum-use-default-bindings)
 
+(use-package counsel-spotify)
+
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key mode
@@ -376,7 +446,7 @@
 
   (general-create-definer pry/leader-keys
     :keymaps '(normal visual insert emacs)
-    :prefix "<tab>"
+    :prefix "C-<tab>"
     :non-normal-prefix "C-<tab>"
     :global-prefix "C-<tab>")
 
@@ -393,6 +463,7 @@
     "pb" '(counsel-projectile-switch-to-buffer :which-key "switch buffer")
     "l" '(:ignore t :which-key "lsp")
     "lf" '(lsp-format-buffer :which-key "format")
+    "ld" '(flymake-show-buffer-diagnostics :which-key "diagnostics")
     "c" '(:ignore t :which-key "comment")
     "cl" '(comment-line :which-key "line")
     "cr" '(comment-region :which-key "region")) 
