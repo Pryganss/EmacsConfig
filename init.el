@@ -438,8 +438,9 @@
     (buffer-substring-no-properties
      (point-min)
      (point-max))))
-(setq counsel-spotify-client-id (nth 0 '(split-string(read-from-file "./secret.txt") "\n" t)))
-(setq counsel-spotify-client-secret (nth 1 '(split-string(read-from-file "./secret.txt") "\n" t)))
+(setq counsel-spotify-client-id (nth 0 (split-string(read-from-file "./secret.txt") "\n" t)))
+(setq counsel-spotify-client-secret (nth 1 (split-string(read-from-file "./secret.txt") "\n" t)))
+(message "done")
 
 (use-package which-key
   :init (which-key-mode)
