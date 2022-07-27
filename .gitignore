@@ -21,3 +21,5 @@ session*
 /.cache/
 /.lsp-session-v1
 /projects
+
+/init.el
