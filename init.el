@@ -432,8 +432,14 @@
 (lorem-ipsum-use-default-bindings)
 
 (use-package counsel-spotify)
-(setq counsel-spotify-client-id "f3e4b3e2fd14438ebffd659552edb6b2")
-(setq counsel-spotify-client-secret "9b8ebb00a4ea4ded9d5b73b7d69e7bd1")
+(defun read-from-file (f)
+  (with-temp-buffer
+    (insert-file-contents f)
+    (buffer-substring-no-properties
+     (point-min)
+     (point-max))))
+(setq counsel-spotify-client-id (nth 0 '(split-string(read-from-file "./secret.txt") "\n" t)))
+(setq counsel-spotify-client-secret (nth 1 '(split-string(read-from-file "./secret.txt") "\n" t)))
 
 (use-package which-key
   :init (which-key-mode)
