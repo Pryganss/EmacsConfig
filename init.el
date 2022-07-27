@@ -432,6 +432,8 @@
 (lorem-ipsum-use-default-bindings)
 
 (use-package counsel-spotify)
+(setq counsel-spotify-client-id "f3e4b3e2fd14438ebffd659552edb6b2")
+(setq counsel-spotify-client-secret "9b8ebb00a4ea4ded9d5b73b7d69e7bd1")
 
 (use-package which-key
   :init (which-key-mode)

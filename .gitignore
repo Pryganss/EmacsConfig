@@ -14,3 +14,10 @@
 /bookmarks
 /init-new.el
 /init-old.el
+
+session*
+/straight/
+/var/
+/.cache/
+/.lsp-session-v1
+/projects
